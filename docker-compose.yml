@@ -1,0 +1,38 @@
+services:
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kardex
+      POSTGRES_PASSWORD: kardex_dev
+      POSTGRES_DB: kardex_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kardex -d kardex_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kardex:kardex_dev@postgres:5432/kardex_dev
+      JWT_SECRET: ${JWT_SECRET:-changeme_in_production_use_long_random_string}
+      APP_URL: ${APP_URL:-http://localhost:5173}
+      PORT: 8080
+    ports:
+      - "3000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

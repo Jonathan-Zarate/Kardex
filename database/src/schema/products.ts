@@ -1,0 +1,24 @@
+import { boolean, numeric, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
+import { categories } from './categories'
+import { companies } from './companies'
+import { unitOfMeasureEnum } from './enums'
+import { suppliers } from './suppliers'
+
+export const products = pgTable('products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  companyId: uuid('company_id').notNull().references(() => companies.id),
+  categoryId: uuid('category_id').references(() => categories.id),
+  supplierId: uuid('supplier_id').references(() => suppliers.id),
+  code: varchar('code', { length: 100 }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  unitOfMeasure: unitOfMeasureEnum('unit_of_measure').notNull(),
+  minStock: numeric('min_stock', { precision: 15, scale: 4 }).notNull().default('0'),
+  salePrice: numeric('sale_price', { precision: 15, scale: 4 }),
+  imageUrl: text('image_url'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  companyCodeIdx: uniqueIndex('uq_products_company_code').on(table.companyId, table.code),
+}))

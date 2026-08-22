@@ -1,0 +1,36 @@
+import { index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import type { AnyPgColumn } from 'drizzle-orm/pg-core'
+import { companies } from './companies'
+import { movementStatusEnum, movementSubtypeEnum, movementTypeEnum } from './enums'
+import { products } from './products'
+import { suppliers } from './suppliers'
+import { users } from './users'
+import { warehouses } from './warehouses'
+
+export const inventoryMovements = pgTable('inventory_movements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  companyId: uuid('company_id').notNull().references(() => companies.id),
+  productId: uuid('product_id').notNull().references(() => products.id),
+  warehouseId: uuid('warehouse_id').notNull().references(() => warehouses.id),
+  type: movementTypeEnum('type').notNull(),
+  subtype: movementSubtypeEnum('subtype').notNull(),
+  status: movementStatusEnum('status').notNull().default('APPROVED'),
+  quantity: numeric('quantity', { precision: 15, scale: 4 }).notNull(),
+  unitCost: numeric('unit_cost', { precision: 15, scale: 4 }).notNull().default('0'),
+  totalCost: numeric('total_cost', { precision: 15, scale: 4 }).notNull().default('0'),
+  reference: text('reference'),
+  notes: text('notes'),
+  supplierId: uuid('supplier_id').references(() => suppliers.id),
+  // Self-reference: devoluciones apuntan al movimiento original
+  referenceMovementId: uuid('reference_movement_id').references(
+    (): AnyPgColumn => inventoryMovements.id,
+  ),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  rejectionComment: text('rejection_comment'),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  companyProductIdx: index('idx_movements_company_product').on(table.companyId, table.productId),
+  companyCreatedAtIdx: index('idx_movements_company_created_at').on(table.companyId, table.createdAt),
+}))

@@ -1,0 +1,8 @@
+packages:
+  - 'backend'
+  - 'database'
+  - 'frontend'
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@hono/node-server@2.0.5'

@@ -1,0 +1,2 @@
+ALTER TYPE "movement_status" ADD VALUE IF NOT EXISTS 'VOIDED';
+ALTER TYPE "movement_subtype" ADD VALUE IF NOT EXISTS 'VOID';

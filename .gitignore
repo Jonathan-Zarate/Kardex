@@ -1,0 +1,28 @@
+# Dependencias
+node_modules/
+
+# Compilacion y cobertura
+dist/
+coverage/
+*.tsbuildinfo
+
+# Variables y secretos locales
+.env
+.env.*
+!.env.example
+
+# Logs y salidas locales
+*.log
+backend-out.txt
+backend-err.txt
+
+# Herramientas y sistema operativo
+.DS_Store
+Thumbs.db
+.playwright-mcp/
+.agents/
+.claude/
+
+# Editores
+.idea/
+.vscode/

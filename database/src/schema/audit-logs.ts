@@ -1,0 +1,20 @@
+import { index, jsonb, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { companies } from './companies'
+import { users } from './users'
+
+// Tabla inmutable: sin updatedAt, DELETE no permitido (RNF-09)
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  companyId: uuid('company_id').notNull().references(() => companies.id),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  action: varchar('action', { length: 50 }).notNull(),
+  entity: varchar('entity', { length: 100 }).notNull(),
+  entityId: uuid('entity_id'),
+  oldValue: jsonb('old_value'),
+  newValue: jsonb('new_value'),
+  ip: varchar('ip', { length: 45 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  companyIdx: index('idx_audit_company_id').on(table.companyId),
+  companyCreatedAtIdx: index('idx_audit_company_created_at').on(table.companyId, table.createdAt),
+}))
