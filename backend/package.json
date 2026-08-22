@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js"
   },
@@ -27,6 +28,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/pdfkit": "^0.17.6",
     "tsx": "^4.7.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.11"
   }
 }
