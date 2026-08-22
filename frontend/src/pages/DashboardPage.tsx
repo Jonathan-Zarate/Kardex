@@ -114,8 +114,11 @@ export function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
-                  formatter={(v: number, name: string) => [currency(v), name === 'inValue' ? 'Entradas' : 'Salidas']}
-                  labelFormatter={formatDay}
+                  formatter={(value, name) => [
+                    currency(Number(value ?? 0)),
+                    name === 'inValue' ? 'Entradas' : 'Salidas',
+                  ]}
+                  labelFormatter={(label) => typeof label === 'string' ? formatDay(label) : String(label ?? '')}
                 />
                 <Legend
                   iconType="circle"
@@ -160,7 +163,7 @@ export function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
-                  formatter={(v: number) => [v, 'Movimientos']}
+                  formatter={(value) => [Number(value ?? 0), 'Movimientos']}
                 />
                 <Bar dataKey="movement_count" fill="#3b82f6" radius={[0, 3, 3, 0]} maxBarSize={16} />
               </BarChart>
