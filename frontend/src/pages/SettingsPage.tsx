@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyApi } from '@/api/company'
 import { Button } from '@/components/ui/Button'
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import type { Company } from '@/types/api'
 
 interface FormState {
   name: string; ruc: string; address: string
@@ -34,29 +35,31 @@ const DECIMAL_OPTIONS = [
 ]
 
 export function SettingsPage() {
-  const qc = useQueryClient()
-  const [form, setForm] = useState<FormState | null>(null)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
-
   const { data: company, isLoading } = useQuery({
     queryKey: ['company'],
     queryFn: companyApi.get,
   })
 
-  useEffect(() => {
-    if (company) {
-      setForm({
-        name: company.name,
-        ruc: company.ruc,
-        address: company.address ?? '',
-        currency: company.currency,
-        timezone: company.timezone,
-        decimalSeparator: company.decimalSeparator,
-        dateFormat: company.dateFormat,
-      })
-    }
-  }, [company])
+  if (isLoading || !company) {
+    return <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+  }
+
+  return <SettingsForm company={company} />
+}
+
+function SettingsForm({ company }: { company: Company }) {
+  const qc = useQueryClient()
+  const [form, setForm] = useState<FormState>(() => ({
+    name: company.name,
+    ruc: company.ruc,
+    address: company.address ?? '',
+    currency: company.currency,
+    timezone: company.timezone,
+    decimalSeparator: company.decimalSeparator,
+    dateFormat: company.dateFormat,
+  }))
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
 
   const updateMutation = useMutation({
     mutationFn: (f: FormState) =>
@@ -79,12 +82,8 @@ export function SettingsPage() {
 
   function set(k: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      setForm((f) => f ? { ...f, [k]: e.target.value } : f)
+      setForm((f) => ({ ...f, [k]: e.target.value }))
     }
-  }
-
-  if (isLoading || !form) {
-    return <div className="flex justify-center py-16"><Spinner size="lg" /></div>
   }
 
   return (

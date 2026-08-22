@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/auth'
 import { AppShell } from '@/components/layout/AppShell'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
@@ -18,12 +18,6 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { ReportsPage } from '@/pages/ReportsPage'
 import { AuditPage } from '@/pages/AuditPage'
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((s) => s.accessToken)
-  if (!token) return <Navigate to="/login" replace />
-  return <>{children}</>
-}
 
 export const router = createBrowserRouter([
   {
