@@ -36,6 +36,7 @@ export function NewMovementPage() {
   const [unitCost, setUnitCost] = useState('')
   const [supplierId, setSupplierId] = useState('')
   const [reference, setReference] = useState('')
+  const [referenceMovementId, setReferenceMovementId] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
 
@@ -50,6 +51,22 @@ export function NewMovementPage() {
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
     queryFn: () => suppliersApi.list(),
+  })
+
+  const isSaleReturn = type === 'ENTRY' && subtype === 'SALE_RETURN'
+  const isPurchaseReturn = type === 'EXIT' && subtype === 'PURCHASE_RETURN'
+  const isReturn = isSaleReturn || isPurchaseReturn
+
+  const { data: originalMovements } = useQuery({
+    queryKey: ['returnable-movements', type, subtype, productId, warehouseId],
+    queryFn: () => movementsApi.list({
+      productId,
+      warehouseId,
+      type: isSaleReturn ? 'EXIT' : 'ENTRY',
+      status: 'APPROVED',
+      limit: 100,
+    }),
+    enabled: isReturn && Boolean(productId) && Boolean(warehouseId),
   })
 
   const mutation = useMutation({
@@ -69,7 +86,8 @@ export function NewMovementPage() {
         productId,
         warehouseId,
         quantity: parseFloat(quantity),
-        unitCost: parseFloat(unitCost),
+        unitCost: isSaleReturn ? undefined : parseFloat(unitCost),
+        referenceMovementId: isSaleReturn ? referenceMovementId : undefined,
         reference: reference || undefined,
         notes: notes || undefined,
         supplierId: supplierId || undefined,
@@ -81,6 +99,7 @@ export function NewMovementPage() {
         productId,
         warehouseId,
         quantity: parseFloat(quantity),
+        referenceMovementId: isPurchaseReturn ? referenceMovementId : undefined,
         reference: reference || undefined,
         notes: notes || undefined,
       })
@@ -105,10 +124,23 @@ export function NewMovementPage() {
     .map((s) => ({ value: s.id, label: s.name }))
 
   const subtypeOpts = type === 'ENTRY' ? ENTRY_SUBTYPES : EXIT_SUBTYPES
+  const expectedOriginalSubtype = isSaleReturn ? 'SALE' : 'PURCHASE'
+  const originalMovementOpts = (originalMovements?.data ?? [])
+    .filter((movement) => movement.subtype === expectedOriginalSubtype)
+    .map((movement) => ({
+      value: movement.id,
+      label: `${movement.reference || movement.id.slice(0, 8)} — ${Number(movement.quantity)} unidades — ${new Date(movement.createdAt).toLocaleDateString('es-PE')}`,
+    }))
 
   function handleTypeChange(t: MovType) {
     setType(t)
     setSubtype(t === 'ENTRY' ? 'PURCHASE' : t === 'EXIT' ? 'SALE' : '')
+    setReferenceMovementId('')
+  }
+
+  function handleSubtypeChange(value: string) {
+    setSubtype(value)
+    setReferenceMovementId('')
   }
 
   return (
@@ -149,7 +181,7 @@ export function NewMovementPage() {
               <Select
                 label="Subtipo"
                 value={subtype}
-                onChange={(e) => setSubtype(e.target.value)}
+                onChange={(e) => handleSubtypeChange(e.target.value)}
                 options={subtypeOpts}
               />
             )}
@@ -158,7 +190,7 @@ export function NewMovementPage() {
             <Select
               label="Producto *"
               value={productId}
-              onChange={(e) => setProductId(e.target.value)}
+              onChange={(e) => { setProductId(e.target.value); setReferenceMovementId('') }}
               options={productOpts}
               placeholder="Seleccionar producto..."
             />
@@ -185,7 +217,7 @@ export function NewMovementPage() {
               <Select
                 label="Almacén *"
                 value={warehouseId}
-                onChange={(e) => setWarehouseId(e.target.value)}
+                onChange={(e) => { setWarehouseId(e.target.value); setReferenceMovementId('') }}
                 options={warehouseOpts}
                 placeholder="Seleccionar almacén..."
               />
@@ -202,7 +234,7 @@ export function NewMovementPage() {
                 onChange={(e) => setQuantity(e.target.value)}
                 required
               />
-              {type === 'ENTRY' && (
+              {type === 'ENTRY' && !isSaleReturn && (
                 <Input
                   label="Costo unitario *"
                   type="number"
@@ -215,8 +247,21 @@ export function NewMovementPage() {
               )}
             </div>
 
+            {isReturn && (
+              <Select
+                label={`Movimiento original (${isSaleReturn ? 'venta' : 'compra'}) *`}
+                value={referenceMovementId}
+                onChange={(e) => setReferenceMovementId(e.target.value)}
+                options={originalMovementOpts}
+                placeholder={productId && warehouseId
+                  ? 'Seleccionar movimiento original...'
+                  : 'Selecciona primero producto y almacén'}
+                required
+              />
+            )}
+
             {/* Proveedor (solo ENTRY) */}
-            {type === 'ENTRY' && (
+            {type === 'ENTRY' && !isSaleReturn && (
               <Select
                 label="Proveedor (opcional)"
                 value={supplierId}

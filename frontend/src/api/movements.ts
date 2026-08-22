@@ -7,7 +7,8 @@ export interface EntryInput {
   productId: string
   warehouseId: string
   quantity: number
-  unitCost: number
+  unitCost?: number
+  referenceMovementId?: string
   reference?: string
   notes?: string
   supplierId?: string
@@ -19,6 +20,7 @@ export interface ExitInput {
   productId: string
   warehouseId: string
   quantity: number
+  referenceMovementId?: string
   reference?: string
   notes?: string
 }
