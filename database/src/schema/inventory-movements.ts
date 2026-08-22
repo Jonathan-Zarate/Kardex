@@ -1,4 +1,5 @@
-import { index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { check, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { movementStatusEnum, movementSubtypeEnum, movementTypeEnum } from './enums'
@@ -33,4 +34,16 @@ export const inventoryMovements = pgTable('inventory_movements', {
 }, (table) => ({
   companyProductIdx: index('idx_movements_company_product').on(table.companyId, table.productId),
   companyCreatedAtIdx: index('idx_movements_company_created_at').on(table.companyId, table.createdAt),
+  quantityCheck: check('ck_movements_quantity_positive', sql`${table.quantity} > 0`),
+  unitCostCheck: check('ck_movements_unit_cost_nonnegative', sql`${table.unitCost} >= 0`),
+  totalCostCheck: check('ck_movements_total_cost_nonnegative', sql`${table.totalCost} >= 0`),
+  typeSubtypeCheck: check('ck_movements_type_subtype', sql`
+    (${table.type} = 'ENTRY' AND ${table.subtype} IN ('PURCHASE', 'SALE_RETURN', 'POSITIVE_ADJUSTMENT', 'VOID')) OR
+    (${table.type} = 'EXIT' AND ${table.subtype} IN ('SALE', 'PURCHASE_RETURN', 'NEGATIVE_ADJUSTMENT', 'VOID')) OR
+    (${table.type} = 'TRANSFER' AND ${table.subtype} IN ('TRANSFER_IN', 'TRANSFER_OUT'))
+  `),
+  requiredReferenceCheck: check('ck_movements_required_reference', sql`
+    ${table.subtype} NOT IN ('SALE_RETURN', 'PURCHASE_RETURN', 'TRANSFER_IN', 'VOID')
+    OR ${table.referenceMovementId} IS NOT NULL
+  `),
 }))

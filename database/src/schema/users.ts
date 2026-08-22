@@ -1,4 +1,5 @@
-import { boolean, integer, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { boolean, check, integer, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { userRoleEnum } from './enums'
 
@@ -14,4 +15,6 @@ export const users = pgTable('users', {
   lockedAt: timestamp('locked_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => ({
+  failedAttemptsCheck: check('ck_users_failed_attempts_nonnegative', sql`${table.failedLoginAttempts} >= 0`),
+}))

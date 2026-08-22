@@ -15,6 +15,20 @@
       "when": 1781677584505,
       "tag": "0001_add_supplier_to_products",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781677684505,
+      "tag": "0002_add_voided_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787414400000,
+      "tag": "0003_add_inventory_checks",
+      "breakpoints": true
     }
   ]
 }

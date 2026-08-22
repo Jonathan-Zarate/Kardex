@@ -1,4 +1,5 @@
-import { boolean, numeric, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { boolean, check, numeric, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 import { categories } from './categories'
 import { companies } from './companies'
 import { unitOfMeasureEnum } from './enums'
@@ -21,4 +22,6 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   companyCodeIdx: uniqueIndex('uq_products_company_code').on(table.companyId, table.code),
+  minStockCheck: check('ck_products_min_stock_nonnegative', sql`${table.minStock} >= 0`),
+  salePriceCheck: check('ck_products_sale_price_nonnegative', sql`${table.salePrice} IS NULL OR ${table.salePrice} >= 0`),
 }))

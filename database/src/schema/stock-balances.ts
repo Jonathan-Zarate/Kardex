@@ -1,4 +1,5 @@
-import { numeric, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { check, numeric, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { products } from './products'
 import { warehouses } from './warehouses'
@@ -17,4 +18,6 @@ export const stockBalances = pgTable('stock_balances', {
     table.productId,
     table.warehouseId,
   ),
+  quantityCheck: check('ck_stock_balances_quantity_nonnegative', sql`${table.quantity} >= 0`),
+  avgCostCheck: check('ck_stock_balances_avg_cost_nonnegative', sql`${table.avgCost} >= 0`),
 }))

@@ -1,4 +1,5 @@
-import { index, numeric, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { check, index, numeric, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { inventoryMovements } from './inventory-movements'
 import { products } from './products'
@@ -35,4 +36,13 @@ export const kardexEntries = pgTable('kardex_entries', {
     table.warehouseId,
     table.date,
   ),
+  nonnegativeValuesCheck: check('ck_kardex_values_nonnegative', sql`
+    ${table.inQty} >= 0 AND ${table.inUnitCost} >= 0 AND ${table.inTotalCost} >= 0 AND
+    ${table.outQty} >= 0 AND ${table.outUnitCost} >= 0 AND ${table.outTotalCost} >= 0 AND
+    ${table.balanceQty} >= 0 AND ${table.balanceAvgCost} >= 0 AND ${table.balanceTotalValue} >= 0
+  `),
+  directionCheck: check('ck_kardex_single_direction', sql`
+    (${table.inQty} > 0 AND ${table.outQty} = 0) OR
+    (${table.outQty} > 0 AND ${table.inQty} = 0)
+  `),
 }))
