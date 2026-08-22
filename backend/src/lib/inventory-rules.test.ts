@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateReturn, ReturnRuleError, type ReturnRuleInput } from './inventory-rules'
+import {
+  calculateExitBalance,
+  evaluateReturn,
+  ReturnRuleError,
+  type ReturnRuleInput,
+} from './inventory-rules'
 
 function saleReturn(overrides: Partial<ReturnRuleInput> = {}): ReturnRuleInput {
   return {
@@ -71,5 +76,33 @@ describe('evaluateReturn', () => {
     expect(() => evaluateReturn(saleReturn({
       original: { ...saleReturn().original, status: 'PENDING' },
     }))).toThrow('no es compatible')
+  })
+})
+
+describe('calculateExitBalance', () => {
+  it('mantiene el promedio cuando la salida usa el costo promedio vigente', () => {
+    expect(calculateExitBalance(10, 12, 4)).toEqual({
+      quantity: 6,
+      avgCost: 12,
+      totalValue: 72,
+      totalCost: 48,
+    })
+  })
+
+  it('recalcula el promedio restante al devolver una compra a su costo original', () => {
+    expect(calculateExitBalance(10, 12, 2, 8)).toEqual({
+      quantity: 8,
+      avgCost: 13,
+      totalValue: 104,
+      totalCost: 16,
+    })
+  })
+
+  it('rechaza una salida superior al stock', () => {
+    expect(() => calculateExitBalance(2, 10, 3)).toThrow('Stock insuficiente')
+  })
+
+  it('rechaza una devolución cuyo costo supera el valor del inventario', () => {
+    expect(() => calculateExitBalance(2, 5, 1, 12)).toThrow('excede el valor disponible')
   })
 })

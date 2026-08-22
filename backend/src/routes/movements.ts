@@ -19,7 +19,8 @@ const createSchema = z.discriminatedUnion('type', [
     productId: z.string().uuid(),
     warehouseId: z.string().uuid(),
     quantity: z.number().positive(),
-    unitCost: z.number().min(0),
+    unitCost: z.number().min(0).optional(),
+    referenceMovementId: z.string().uuid().optional(),
     reference: z.string().max(255).optional(),
     notes: z.string().max(1000).optional(),
     supplierId: z.string().uuid().optional(),
@@ -30,6 +31,7 @@ const createSchema = z.discriminatedUnion('type', [
     productId: z.string().uuid(),
     warehouseId: z.string().uuid(),
     quantity: z.number().positive(),
+    referenceMovementId: z.string().uuid().optional(),
     reference: z.string().max(255).optional(),
     notes: z.string().max(1000).optional(),
   }),
@@ -41,7 +43,23 @@ const createSchema = z.discriminatedUnion('type', [
     quantity: z.number().positive(),
     notes: z.string().max(1000).optional(),
   }),
-])
+]).superRefine((movement, context) => {
+  if (movement.type === 'ENTRY' && movement.subtype !== 'SALE_RETURN' && movement.unitCost === undefined) {
+    context.addIssue({ code: 'custom', path: ['unitCost'], message: 'El costo unitario es obligatorio' })
+  }
+
+  if (
+    ((movement.type === 'ENTRY' && movement.subtype === 'SALE_RETURN')
+      || (movement.type === 'EXIT' && movement.subtype === 'PURCHASE_RETURN'))
+    && !movement.referenceMovementId
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['referenceMovementId'],
+      message: 'La devolución requiere el movimiento original',
+    })
+  }
+})
 
 // POST /movements — crear movimiento con actualización de stock y kardex
 movementsRoutes.post('/', zValidator('json', createSchema), async (c) => {

@@ -33,6 +33,40 @@ export class ReturnRuleError extends Error {
   }
 }
 
+export interface ExitBalance {
+  quantity: number
+  avgCost: number
+  totalValue: number
+  totalCost: number
+}
+
+export function calculateExitBalance(
+  currentQuantity: number,
+  currentAvgCost: number,
+  exitQuantity: number,
+  exitUnitCost = currentAvgCost,
+): ExitBalance {
+  if (exitQuantity > currentQuantity) {
+    throw new ReturnRuleError(`Stock insuficiente. Disponible: ${currentQuantity}`)
+  }
+
+  const quantity = currentQuantity - exitQuantity
+  const totalCost = exitQuantity * exitUnitCost
+  const remainingValue = currentQuantity * currentAvgCost - totalCost
+
+  if (remainingValue < -0.0001) {
+    throw new ReturnRuleError('La devolución excede el valor disponible del inventario')
+  }
+
+  const totalValue = Math.max(0, remainingValue)
+  return {
+    quantity,
+    avgCost: quantity > 0 ? totalValue / quantity : 0,
+    totalValue,
+    totalCost,
+  }
+}
+
 const ORIGINAL_SUBTYPE: Record<ReturnSubtype, 'SALE' | 'PURCHASE'> = {
   SALE_RETURN: 'SALE',
   PURCHASE_RETURN: 'PURCHASE',

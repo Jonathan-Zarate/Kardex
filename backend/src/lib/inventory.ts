@@ -1,6 +1,7 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db'
 import { inventoryMovements, kardexEntries, stockBalances } from '@kardex/database'
+import { calculateExitBalance, evaluateReturn, ReturnRuleError } from './inventory-rules'
 
 export class InventoryError extends Error {
   constructor(message: string) {
@@ -16,7 +17,8 @@ export interface EntryInput {
   productId: string
   warehouseId: string
   quantity: number
-  unitCost: number
+  unitCost?: number
+  referenceMovementId?: string
   reference?: string | null
   notes?: string | null
   supplierId?: string | null
@@ -30,6 +32,7 @@ export interface ExitInput {
   productId: string
   warehouseId: string
   quantity: number
+  referenceMovementId?: string
   reference?: string | null
   notes?: string | null
   createdBy: string
@@ -56,8 +59,19 @@ function newAvgCost(currentQty: number, currentAvg: number, inQty: number, inCos
 type TxClient = Parameters<Parameters<typeof db.transaction>[0]>[0]
 type MovementInsert = typeof inventoryMovements.$inferInsert
 
+async function lockInventoryKeys(tx: TxClient, keys: string[]) {
+  for (const key of [...new Set(keys)].sort()) {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`)
+  }
+}
+
 // Creates movement and immediately applies stock + kardex (for auto-approved movements).
-async function createAndApply(tx: TxClient, values: MovementInsert, now: Date) {
+async function createAndApply(
+  tx: TxClient,
+  values: MovementInsert,
+  now: Date,
+  exitUnitCost?: number,
+) {
   const [movement] = await tx.insert(inventoryMovements).values(values).returning()
 
   const { companyId, productId, warehouseId } = movement
@@ -109,18 +123,24 @@ async function createAndApply(tx: TxClient, values: MovementInsert, now: Date) {
       throw new InventoryError(`Stock insuficiente. Disponible: ${currentQty}`)
     }
 
-    const newQty = currentQty - qty
-    const totalCost = qty * currentAvg
+    const cost = exitUnitCost ?? currentAvg
+    let balance
+    try {
+      balance = calculateExitBalance(currentQty, currentAvg, qty, cost)
+    } catch (error) {
+      if (error instanceof ReturnRuleError) throw new InventoryError(error.message)
+      throw error
+    }
 
     if (row) {
       await tx.update(stockBalances)
-        .set({ quantity: newQty.toFixed(4), updatedAt: now })
+        .set({ quantity: balance.quantity.toFixed(4), avgCost: balance.avgCost.toFixed(4), updatedAt: now })
         .where(eq(stockBalances.id, row.id))
     }
 
     // Update movement with actual cost (EXIT cost = avg at moment of operation)
     await tx.update(inventoryMovements)
-      .set({ unitCost: currentAvg.toFixed(4), totalCost: totalCost.toFixed(4) })
+      .set({ unitCost: cost.toFixed(4), totalCost: balance.totalCost.toFixed(4) })
       .where(eq(inventoryMovements.id, movement.id))
 
     await tx.insert(kardexEntries).values({
@@ -128,11 +148,11 @@ async function createAndApply(tx: TxClient, values: MovementInsert, now: Date) {
       companyId, productId, warehouseId,
       date: now,
       outQty: qty.toFixed(4),
-      outUnitCost: currentAvg.toFixed(4),
-      outTotalCost: totalCost.toFixed(4),
-      balanceQty: newQty.toFixed(4),
-      balanceAvgCost: currentAvg.toFixed(4),
-      balanceTotalValue: (newQty * currentAvg).toFixed(4),
+      outUnitCost: cost.toFixed(4),
+      outTotalCost: balance.totalCost.toFixed(4),
+      balanceQty: balance.quantity.toFixed(4),
+      balanceAvgCost: balance.avgCost.toFixed(4),
+      balanceTotalValue: balance.totalValue.toFixed(4),
     })
   }
 
@@ -150,6 +170,11 @@ export async function processMovement(input: MovementInput) {
       if (sourceWarehouseId === targetWarehouseId) {
         throw new InventoryError('El almacén origen y destino no pueden ser el mismo')
       }
+
+      await lockInventoryKeys(tx, [
+        `${companyId}:${productId}:${sourceWarehouseId}`,
+        `${companyId}:${productId}:${targetWarehouseId}`,
+      ])
 
       const [srcRow] = await tx.select().from(stockBalances).where(
         and(
@@ -267,7 +292,24 @@ export async function processMovement(input: MovementInput) {
 
     /* ── ENTRY ───────────────────────────────────────── */
     if (input.type === 'ENTRY') {
-      const { companyId, productId, warehouseId, quantity, unitCost, subtype, reference, notes, supplierId, createdBy } = input
+      const { companyId, productId, warehouseId, quantity, subtype, reference, notes, supplierId, createdBy } = input
+      let { unitCost } = input
+
+      await lockInventoryKeys(tx, [`${companyId}:${productId}:${warehouseId}`])
+
+      if (subtype === 'SALE_RETURN') {
+        if (!input.referenceMovementId) throw new InventoryError('La devolución requiere el movimiento original')
+        unitCost = await resolveReturnCost(tx, {
+          subtype,
+          companyId,
+          productId,
+          warehouseId,
+          quantity,
+          referenceMovementId: input.referenceMovementId,
+        })
+      }
+
+      if (unitCost === undefined) throw new InventoryError('El costo unitario es obligatorio')
 
       // Adjustments require SUPERVISOR approval — create as PENDING without touching stock
       if (subtype === 'POSITIVE_ADJUSTMENT') {
@@ -298,6 +340,7 @@ export async function processMovement(input: MovementInput) {
         reference: reference ?? null,
         notes: notes ?? null,
         supplierId: supplierId ?? null,
+        referenceMovementId: input.referenceMovementId ?? null,
         createdBy,
         approvedBy: createdBy,
         approvedAt: now,
@@ -308,6 +351,21 @@ export async function processMovement(input: MovementInput) {
 
     /* ── EXIT ────────────────────────────────────────── */
     const { companyId, productId, warehouseId, quantity, subtype, reference, notes, createdBy } = input
+
+    await lockInventoryKeys(tx, [`${companyId}:${productId}:${warehouseId}`])
+
+    let returnCost: number | undefined
+    if (subtype === 'PURCHASE_RETURN') {
+      if (!input.referenceMovementId) throw new InventoryError('La devolución requiere el movimiento original')
+      returnCost = await resolveReturnCost(tx, {
+        subtype,
+        companyId,
+        productId,
+        warehouseId,
+        quantity,
+        referenceMovementId: input.referenceMovementId,
+      })
+    }
 
     // Negative adjustments require SUPERVISOR approval — create as PENDING
     if (subtype === 'NEGATIVE_ADJUSTMENT') {
@@ -336,13 +394,66 @@ export async function processMovement(input: MovementInput) {
       totalCost: '0',
       reference: reference ?? null,
       notes: notes ?? null,
+      referenceMovementId: input.referenceMovementId ?? null,
       createdBy,
       approvedBy: createdBy,
       approvedAt: now,
-    }, now)
+    }, now, returnCost)
 
     return { movements: [movement] }
   })
+}
+
+async function resolveReturnCost(
+  tx: TxClient,
+  input: {
+    subtype: 'SALE_RETURN' | 'PURCHASE_RETURN'
+    companyId: string
+    productId: string
+    warehouseId: string
+    quantity: number
+    referenceMovementId: string
+  },
+) {
+  const [original] = await tx.select().from(inventoryMovements)
+    .where(eq(inventoryMovements.id, input.referenceMovementId))
+    .limit(1)
+
+  if (!original) throw new InventoryError('Movimiento original no encontrado')
+
+  const [returned] = await tx.select({
+    quantity: sql<string>`COALESCE(SUM(${inventoryMovements.quantity}::numeric), 0)::text`,
+  }).from(inventoryMovements).where(and(
+    eq(inventoryMovements.referenceMovementId, input.referenceMovementId),
+    eq(inventoryMovements.subtype, input.subtype),
+    eq(inventoryMovements.status, 'APPROVED'),
+  ))
+
+  const [stock] = await tx.select().from(stockBalances).where(and(
+    eq(stockBalances.companyId, input.companyId),
+    eq(stockBalances.productId, input.productId),
+    eq(stockBalances.warehouseId, input.warehouseId),
+  )).limit(1)
+
+  try {
+    return evaluateReturn({
+      ...input,
+      currentAvgCost: Number(stock?.avgCost ?? 0),
+      previouslyReturnedQuantity: Number(returned?.quantity ?? 0),
+      original: {
+        companyId: original.companyId,
+        productId: original.productId,
+        warehouseId: original.warehouseId,
+        subtype: original.subtype,
+        status: original.status,
+        quantity: Number(original.quantity),
+        unitCost: Number(original.unitCost),
+      },
+    }).unitCost
+  } catch (error) {
+    if (error instanceof ReturnRuleError) throw new InventoryError(error.message)
+    throw error
+  }
 }
 
 /* ── APPROVE ADJUSTMENT ──────────────────────────────── */
@@ -350,6 +461,8 @@ export async function processMovement(input: MovementInput) {
 export async function approveAdjustment(movementId: string, companyId: string, approvedBy: string) {
   return db.transaction(async (tx) => {
     const now = new Date()
+
+    await lockInventoryKeys(tx, [`movement:${movementId}`])
 
     const [movement] = await tx.select().from(inventoryMovements)
       .where(and(eq(inventoryMovements.id, movementId), eq(inventoryMovements.companyId, companyId)))
@@ -363,6 +476,8 @@ export async function approveAdjustment(movementId: string, companyId: string, a
 
     const { productId, warehouseId } = movement
     const qty = parseFloat(movement.quantity)
+
+    await lockInventoryKeys(tx, [`${companyId}:${productId}:${warehouseId}`])
 
     const [stockRow] = await tx.select().from(stockBalances).where(
       and(
@@ -482,6 +597,8 @@ export async function voidMovement(movementId: string, companyId: string, voided
   return db.transaction(async (tx) => {
     const now = new Date()
 
+    await lockInventoryKeys(tx, [`movement:${movementId}`])
+
     const [movement] = await tx.select().from(inventoryMovements)
       .where(and(eq(inventoryMovements.id, movementId), eq(inventoryMovements.companyId, companyId)))
       .limit(1)
@@ -494,6 +611,8 @@ export async function voidMovement(movementId: string, companyId: string, voided
 
     const { productId, warehouseId } = movement
     const qty = parseFloat(movement.quantity)
+
+    await lockInventoryKeys(tx, [`${companyId}:${productId}:${warehouseId}`])
 
     const [stockRow] = await tx.select().from(stockBalances).where(
       and(
