@@ -45,11 +45,11 @@ export function NewMovementPage() {
   })
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses'],
-    queryFn: warehousesApi.list,
+    queryFn: () => warehousesApi.list(),
   })
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: suppliersApi.list,
+    queryFn: () => suppliersApi.list(),
   })
 
   const mutation = useMutation({

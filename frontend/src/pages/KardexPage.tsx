@@ -26,7 +26,7 @@ export function KardexPage() {
   })
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses'],
-    queryFn: warehousesApi.list,
+    queryFn: () => warehousesApi.list(),
   })
 
   const { data: entries = [], isLoading, isFetching } = useQuery({

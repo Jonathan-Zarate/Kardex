@@ -50,9 +50,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number) {
+  public readonly status: number
+
+  constructor(message: string, status: number) {
     super(message)
     this.name = 'ApiError'
+    this.status = status
   }
 }
 

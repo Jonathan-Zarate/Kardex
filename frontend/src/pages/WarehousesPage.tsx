@@ -20,7 +20,7 @@ export function WarehousesPage() {
 
   const { data: warehouses = [], isLoading } = useQuery({
     queryKey: ['warehouses'],
-    queryFn: warehousesApi.list,
+    queryFn: () => warehousesApi.list(),
   })
 
   const saveMutation = useMutation({

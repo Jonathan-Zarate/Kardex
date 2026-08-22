@@ -40,7 +40,7 @@ export function ProductsPage() {
   })
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: categoriesApi.list,
+    queryFn: () => categoriesApi.list(),
   })
 
   const saveMutation = useMutation({

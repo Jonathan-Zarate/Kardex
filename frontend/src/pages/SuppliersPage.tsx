@@ -22,7 +22,7 @@ export function SuppliersPage() {
 
   const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: suppliersApi.list,
+    queryFn: () => suppliersApi.list(),
   })
 
   const saveMutation = useMutation({

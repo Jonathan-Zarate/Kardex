@@ -20,7 +20,7 @@ export function CategoriesPage() {
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: categoriesApi.list,
+    queryFn: () => categoriesApi.list(),
   })
 
   const saveMutation = useMutation({

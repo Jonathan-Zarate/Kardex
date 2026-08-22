@@ -75,7 +75,7 @@ function KardexReport() {
   const [format, setFormat] = useState<Format>('pdf')
   const [loading, setLoading] = useState(false)
 
-  const { data: products = [] } = useQuery({ queryKey: ['products'], queryFn: productsApi.list })
+  const { data: products = [] } = useQuery({ queryKey: ['products'], queryFn: () => productsApi.list() })
   const { data: warehouses = [] } = useQuery({ queryKey: ['warehouses'], queryFn: () => warehousesApi.list() })
 
   async function download() {
