@@ -10,6 +10,7 @@
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
+    "pretypecheck": "pnpm --filter @kardex/database build",
     "typecheck": "pnpm -r --if-present typecheck"
   }
 }
