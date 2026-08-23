@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://kardex:kardex_dev@postgres:5432/kardex_dev
-      JWT_SECRET: ${JWT_SECRET:-changeme_in_production_use_long_random_string}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
       APP_URL: ${APP_URL:-http://localhost:5173}
       PORT: 8080
     ports:

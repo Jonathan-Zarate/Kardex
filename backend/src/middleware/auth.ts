@@ -1,4 +1,7 @@
 import type { MiddlewareHandler } from 'hono'
+import { and, eq, isNull } from 'drizzle-orm'
+import { companies, users } from '@kardex/database'
+import { db } from '../db'
 import { verifyAccessToken } from '../lib/jwt'
 import type { AppEnv } from '../types'
 
@@ -15,6 +18,25 @@ export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
     return c.json({ error: 'Token inválido o expirado' }, 401)
   }
 
-  c.set('user', payload)
+  const [user] = await db.select({
+    sub: users.id,
+    companyId: users.companyId,
+    role: users.role,
+    email: users.email,
+  }).from(users)
+    .innerJoin(companies, eq(companies.id, users.companyId))
+    .where(and(
+      eq(users.id, payload.sub),
+      eq(users.isActive, true),
+      isNull(users.lockedAt),
+      eq(companies.isActive, true),
+    ))
+    .limit(1)
+
+  if (!user) {
+    return c.json({ error: 'Sesión no disponible' }, 401)
+  }
+
+  c.set('user', user)
   await next()
 }

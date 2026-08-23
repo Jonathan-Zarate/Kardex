@@ -78,12 +78,7 @@ authRoutes.post(
       .set({ failedLoginAttempts: 0, updatedAt: new Date() })
       .where(eq(users.id, user.id))
 
-    const accessToken = await signAccessToken({
-      sub: user.id,
-      companyId: user.companyId,
-      role: user.role,
-      email: user.email,
-    })
+    const accessToken = await signAccessToken(user.id)
 
     const rawRefreshToken = generateToken()
     await db.insert(refreshTokens).values({
@@ -155,12 +150,7 @@ authRoutes.post(
       .set({ revokedAt: new Date() })
       .where(eq(refreshTokens.id, rt.id))
 
-    const accessToken = await signAccessToken({
-      sub: user.id,
-      companyId: user.companyId,
-      role: user.role,
-      email: user.email,
-    })
+    const accessToken = await signAccessToken(user.id)
 
     const newRaw = generateToken()
     await db.insert(refreshTokens).values({

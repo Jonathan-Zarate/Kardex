@@ -1,13 +1,17 @@
-export interface JWTPayload {
+export interface AccessTokenPayload {
+  sub: string
+  exp: number
+}
+
+export interface AuthenticatedUser {
   sub: string
   companyId: string
   role: 'ADMIN' | 'SUPERVISOR' | 'WAREHOUSE'
   email: string
-  exp: number
 }
 
 export type AppEnv = {
   Variables: {
-    user: JWTPayload
+    user: AuthenticatedUser
   }
 }
