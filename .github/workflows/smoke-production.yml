@@ -1,0 +1,37 @@
+name: Production smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Validate required secrets
+        env:
+          SMOKE_ADMIN_PASSWORD: ${{ secrets.SMOKE_ADMIN_PASSWORD }}
+          SMOKE_SUPERVISOR_PASSWORD: ${{ secrets.SMOKE_SUPERVISOR_PASSWORD }}
+          SMOKE_WAREHOUSE_PASSWORD: ${{ secrets.SMOKE_WAREHOUSE_PASSWORD }}
+        run: |
+          test -n "$SMOKE_ADMIN_PASSWORD"
+          test -n "$SMOKE_SUPERVISOR_PASSWORD"
+          test -n "$SMOKE_WAREHOUSE_PASSWORD"
+
+      - name: Run production smoke
+        working-directory: backend
+        env:
+          SMOKE_API_URL: https://kardex-backend-blush.vercel.app
+          SMOKE_ADMIN_EMAIL: admin@kardex.demo
+          SMOKE_ADMIN_PASSWORD: ${{ secrets.SMOKE_ADMIN_PASSWORD }}
+          SMOKE_SUPERVISOR_EMAIL: supervisor@kardex.demo
+          SMOKE_SUPERVISOR_PASSWORD: ${{ secrets.SMOKE_SUPERVISOR_PASSWORD }}
+          SMOKE_WAREHOUSE_EMAIL: almacenero@kardex.demo
+          SMOKE_WAREHOUSE_PASSWORD: ${{ secrets.SMOKE_WAREHOUSE_PASSWORD }}
+        run: node scripts/smoke-production.mjs

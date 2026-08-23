@@ -6,6 +6,7 @@
     "prebuild": "pnpm --filter @kardex/database build",
     "build": "tsc",
     "test": "vitest run src",
+    "test:smoke": "node scripts/smoke-production.mjs",
     "typecheck": "tsc --noEmit",
     "start": "node dist/server.js"
   },
