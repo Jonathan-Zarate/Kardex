@@ -10,6 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: pnpm/setup@v1
+        with:
+          version: 11.5.2
+          install: false
+
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
