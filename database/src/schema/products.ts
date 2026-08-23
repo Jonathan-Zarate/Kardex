@@ -1,9 +1,9 @@
 import { sql } from 'drizzle-orm'
 import { boolean, check, foreignKey, numeric, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
-import { categories } from './categories'
-import { companies } from './companies'
-import { unitOfMeasureEnum } from './enums'
-import { suppliers } from './suppliers'
+import { categories } from './categories.js'
+import { companies } from './companies.js'
+import { unitOfMeasureEnum } from './enums.js'
+import { suppliers } from './suppliers.js'
 
 export const products = pgTable('products', {
   id: uuid('id').primaryKey().defaultRandom(),

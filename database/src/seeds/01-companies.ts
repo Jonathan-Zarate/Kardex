@@ -1,5 +1,5 @@
-import { db } from '../client'
-import { companies } from '../schema/companies'
+import { db } from '../client.js'
+import { companies } from '../schema/companies.js'
 
 export async function seedCompanies() {
   const [company] = await db.insert(companies).values({

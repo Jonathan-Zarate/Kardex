@@ -1,12 +1,12 @@
 import { sql } from 'drizzle-orm'
 import { check, foreignKey, index, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
-import { companies } from './companies'
-import { movementStatusEnum, movementSubtypeEnum, movementTypeEnum } from './enums'
-import { products } from './products'
-import { suppliers } from './suppliers'
-import { users } from './users'
-import { warehouses } from './warehouses'
+import { companies } from './companies.js'
+import { movementStatusEnum, movementSubtypeEnum, movementTypeEnum } from './enums.js'
+import { products } from './products.js'
+import { suppliers } from './suppliers.js'
+import { users } from './users.js'
+import { warehouses } from './warehouses.js'
 
 export const inventoryMovements = pgTable('inventory_movements', {
   id: uuid('id').primaryKey().defaultRandom(),

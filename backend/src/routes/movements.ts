@@ -2,12 +2,12 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import { and, desc, eq, gte, lte } from 'drizzle-orm'
-import { db } from '../db'
+import { db } from '../db.js'
 import { inventoryMovements, products, warehouses } from '@kardex/database'
-import { InventoryError, approveAdjustment, rejectAdjustment, voidMovement, processMovement } from '../lib/inventory'
-import { authMiddleware } from '../middleware/auth'
-import { requireRole } from '../middleware/require-role'
-import type { AppEnv } from '../types'
+import { InventoryError, approveAdjustment, rejectAdjustment, voidMovement, processMovement } from '../lib/inventory.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { requireRole } from '../middleware/require-role.js'
+import type { AppEnv } from '../types.js'
 
 const movementsRoutes = new Hono<AppEnv>()
 movementsRoutes.use('*', authMiddleware)

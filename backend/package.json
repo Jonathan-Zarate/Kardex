@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "prebuild": "pnpm --filter @kardex/database build",
     "build": "tsc",
     "test": "vitest run src",
     "typecheck": "tsc --noEmit",

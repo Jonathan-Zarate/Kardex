@@ -1,6 +1,6 @@
-import { db } from '../client'
-import { categories } from '../schema/categories'
-import { suppliers } from '../schema/suppliers'
+import { db } from '../client.js'
+import { categories } from '../schema/categories.js'
+import { suppliers } from '../schema/suppliers.js'
 
 export async function seedCatalog(companyId: string) {
   const cats = await db.insert(categories).values([

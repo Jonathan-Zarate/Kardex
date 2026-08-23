@@ -1,6 +1,6 @@
 import { foreignKey, index, jsonb, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
-import { companies } from './companies'
-import { users } from './users'
+import { companies } from './companies.js'
+import { users } from './users.js'
 
 // Tabla inmutable: sin updatedAt, DELETE no permitido (RNF-09)
 export const auditLogs = pgTable('audit_logs', {

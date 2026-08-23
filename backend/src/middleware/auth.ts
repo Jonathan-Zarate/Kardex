@@ -1,9 +1,9 @@
 import type { MiddlewareHandler } from 'hono'
 import { and, eq, isNull } from 'drizzle-orm'
 import { companies, users } from '@kardex/database'
-import { db } from '../db'
-import { verifyAccessToken } from '../lib/jwt'
-import type { AppEnv } from '../types'
+import { db } from '../db.js'
+import { verifyAccessToken } from '../lib/jwt.js'
+import type { AppEnv } from '../types.js'
 
 export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
   const header = c.req.header('Authorization')

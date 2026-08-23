@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { and, asc, eq, gte, lte } from 'drizzle-orm'
-import { db } from '../db'
+import { db } from '../db.js'
 import { inventoryMovements, kardexEntries, products, warehouses } from '@kardex/database'
-import { authMiddleware } from '../middleware/auth'
-import type { AppEnv } from '../types'
+import { authMiddleware } from '../middleware/auth.js'
+import type { AppEnv } from '../types.js'
 
 const kardexRoutes = new Hono<AppEnv>()
 kardexRoutes.use('*', authMiddleware)

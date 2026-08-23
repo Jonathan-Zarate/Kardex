@@ -1,11 +1,11 @@
 // env.js DEBE ser el primer import para que DATABASE_URL esté disponible
 // cuando client.ts se evalúe
-import '../env'
+import '../env.js'
 
-import { seedCatalog } from './04-catalog'
-import { seedCompanies } from './01-companies'
-import { seedUsers } from './02-users'
-import { seedWarehouses } from './03-warehouses'
+import { seedCatalog } from './04-catalog.js'
+import { seedCompanies } from './01-companies.js'
+import { seedUsers } from './02-users.js'
+import { seedWarehouses } from './03-warehouses.js'
 
 const MIN_PASSWORD_LENGTH = 12
 

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { and, asc, desc, eq, gte, lte } from 'drizzle-orm'
-import { db, queryClient } from '../db'
+import { db, queryClient } from '../db.js'
 import {
   companies,
   inventoryMovements,
@@ -9,12 +9,12 @@ import {
   stockBalances,
   warehouses,
 } from '@kardex/database'
-import { generatePDF } from '../lib/pdf'
-import { generateExcel } from '../lib/excel'
-import { authMiddleware } from '../middleware/auth'
-import { requireRole } from '../middleware/require-role'
+import { generatePDF } from '../lib/pdf.js'
+import { generateExcel } from '../lib/excel.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { requireRole } from '../middleware/require-role.js'
 import type { Context } from 'hono'
-import type { AppEnv } from '../types'
+import type { AppEnv } from '../types.js'
 
 const reportsRoutes = new Hono<AppEnv>()
 reportsRoutes.use('*', authMiddleware)

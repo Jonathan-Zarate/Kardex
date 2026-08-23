@@ -1,5 +1,5 @@
 import { sign, verify } from 'hono/jwt'
-import type { AccessTokenPayload } from '../types'
+import type { AccessTokenPayload } from '../types.js'
 
 const ACCESS_EXPIRY = 8 * 60 * 60 // 8 horas en segundos
 

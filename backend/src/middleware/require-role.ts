@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono'
-import type { AppEnv } from '../types'
+import type { AppEnv } from '../types.js'
 
 type Role = 'ADMIN' | 'SUPERVISOR' | 'WAREHOUSE'
 

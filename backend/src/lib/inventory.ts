@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { db } from '../db'
+import { db } from '../db.js'
 import { inventoryMovements, kardexEntries, stockBalances } from '@kardex/database'
-import { calculateExitBalance, evaluateReturn, ReturnRuleError } from './inventory-rules'
+import { calculateExitBalance, evaluateReturn, ReturnRuleError } from './inventory-rules.js'
 
 export class InventoryError extends Error {
   constructor(message: string) {

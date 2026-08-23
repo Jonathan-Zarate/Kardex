@@ -1,9 +1,9 @@
 import { sql } from 'drizzle-orm'
 import { check, foreignKey, index, numeric, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { companies } from './companies'
-import { inventoryMovements } from './inventory-movements'
-import { products } from './products'
-import { warehouses } from './warehouses'
+import { companies } from './companies.js'
+import { inventoryMovements } from './inventory-movements.js'
+import { products } from './products.js'
+import { warehouses } from './warehouses.js'
 
 export const kardexEntries = pgTable('kardex_entries', {
   id: uuid('id').primaryKey().defaultRandom(),

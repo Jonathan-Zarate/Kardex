@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm'
 import { check, foreignKey, numeric, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
-import { companies } from './companies'
-import { products } from './products'
-import { warehouses } from './warehouses'
+import { companies } from './companies.js'
+import { products } from './products.js'
+import { warehouses } from './warehouses.js'
 
 export const stockBalances = pgTable('stock_balances', {
   id: uuid('id').primaryKey().defaultRandom(),

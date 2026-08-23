@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
-import { db } from '../client'
-import { users } from '../schema/users'
+import { db } from '../client.js'
+import { users } from '../schema/users.js'
 
 export interface SeedUserPasswords {
   admin: string

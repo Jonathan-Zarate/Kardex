@@ -2,12 +2,12 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { db } from '../db'
+import { db } from '../db.js'
 import { companies } from '@kardex/database'
-import { logAudit } from '../lib/audit'
-import { authMiddleware } from '../middleware/auth'
-import { requireRole } from '../middleware/require-role'
-import type { AppEnv } from '../types'
+import { logAudit } from '../lib/audit.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { requireRole } from '../middleware/require-role.js'
+import type { AppEnv } from '../types.js'
 
 const companyRoutes = new Hono<AppEnv>()
 companyRoutes.use('*', authMiddleware)

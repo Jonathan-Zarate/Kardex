@@ -4,7 +4,7 @@ import {
   evaluateReturn,
   ReturnRuleError,
   type ReturnRuleInput,
-} from './inventory-rules'
+} from './inventory-rules.js'
 
 function saleReturn(overrides: Partial<ReturnRuleInput> = {}): ReturnRuleInput {
   return {

@@ -2,11 +2,11 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
-import { db } from '../db'
+import { db } from '../db.js'
 import { warehouses } from '@kardex/database'
-import { authMiddleware } from '../middleware/auth'
-import { requireRole } from '../middleware/require-role'
-import type { AppEnv } from '../types'
+import { authMiddleware } from '../middleware/auth.js'
+import { requireRole } from '../middleware/require-role.js'
+import type { AppEnv } from '../types.js'
 
 const warehousesRoutes = new Hono<AppEnv>()
 warehousesRoutes.use('*', authMiddleware)
