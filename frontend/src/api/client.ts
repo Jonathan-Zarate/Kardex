@@ -1,12 +1,13 @@
 import { useAuthStore } from '@/store/auth'
 
-const BASE = '/api'
+const configuredBase = import.meta.env.VITE_API_URL?.trim()
+export const API_BASE = configuredBase ? configuredBase.replace(/\/$/, '') : '/api'
 
 async function refreshAccessToken(): Promise<boolean> {
   const { refreshToken, setAccessToken, logout } = useAuthStore.getState()
   if (!refreshToken) return false
   try {
-    const res = await fetch(`${BASE}/auth/refresh`, {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -30,14 +31,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`)
 
-  let res = await fetch(`${BASE}${path}`, { ...init, headers })
+  let res = await fetch(`${API_BASE}${path}`, { ...init, headers })
 
   if (res.status === 401 && accessToken) {
     const ok = await refreshAccessToken()
     if (!ok) throw new ApiError('Sesión expirada', 401)
     const { accessToken: newToken } = useAuthStore.getState()
     headers.set('Authorization', `Bearer ${newToken}`)
-    res = await fetch(`${BASE}${path}`, { ...init, headers })
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers })
   }
 
   if (!res.ok) {

@@ -1,10 +1,9 @@
 import { useAuthStore } from '@/store/auth'
-
-const BASE = '/api'
+import { API_BASE } from './client'
 
 async function downloadFile(path: string, filename: string) {
   const { accessToken } = useAuthStore.getState()
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!res.ok) {
