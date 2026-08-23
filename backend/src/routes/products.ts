@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db.js'
+import { isUniqueViolation } from '../lib/db-errors.js'
 import { categories, products } from '@kardex/database'
 import { authMiddleware } from '../middleware/auth.js'
 import { requireRole } from '../middleware/require-role.js'
@@ -83,22 +84,29 @@ productsRoutes.post(
       return c.json({ error: 'Ya existe un producto con ese código' }, 409)
     }
 
-    const [created] = await db
-      .insert(products)
-      .values({
-        companyId,
-        categoryId: categoryId ?? null,
-        code,
-        name,
-        description: description ?? null,
-        unitOfMeasure,
-        minStock: minStock.toFixed(4),
-        salePrice: salePrice !== undefined ? salePrice.toFixed(4) : null,
-        imageUrl: imageUrl ?? null,
-      })
-      .returning(PRODUCT_FIELDS)
+    try {
+      const [created] = await db
+        .insert(products)
+        .values({
+          companyId,
+          categoryId: categoryId ?? null,
+          code,
+          name,
+          description: description ?? null,
+          unitOfMeasure,
+          minStock: minStock.toFixed(4),
+          salePrice: salePrice !== undefined ? salePrice.toFixed(4) : null,
+          imageUrl: imageUrl ?? null,
+        })
+        .returning(PRODUCT_FIELDS)
 
-    return c.json(created, 201)
+      return c.json(created, 201)
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        return c.json({ error: 'Ya existe un producto con ese código' }, 409)
+      }
+      throw error
+    }
   },
 )
 
