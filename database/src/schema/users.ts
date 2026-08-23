@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, integer, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, check, integer, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { userRoleEnum } from './enums'
 
@@ -17,4 +17,5 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   failedAttemptsCheck: check('ck_users_failed_attempts_nonnegative', sql`${table.failedLoginAttempts} >= 0`),
+  idCompanyIdx: uniqueIndex('uq_users_id_company').on(table.id, table.companyId),
 }))

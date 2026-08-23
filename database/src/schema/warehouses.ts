@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 
 export const warehouses = pgTable('warehouses', {
@@ -9,4 +9,6 @@ export const warehouses = pgTable('warehouses', {
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => ({
+  idCompanyIdx: uniqueIndex('uq_warehouses_id_company').on(table.id, table.companyId),
+}))

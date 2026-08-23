@@ -1,4 +1,4 @@
-import { index, jsonb, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { foreignKey, index, jsonb, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { users } from './users'
 
@@ -17,4 +17,9 @@ export const auditLogs = pgTable('audit_logs', {
 }, (table) => ({
   companyIdx: index('idx_audit_company_id').on(table.companyId),
   companyCreatedAtIdx: index('idx_audit_company_created_at').on(table.companyId, table.createdAt),
+  userCompanyFk: foreignKey({
+    columns: [table.userId, table.companyId],
+    foreignColumns: [users.id, users.companyId],
+    name: 'fk_audit_user_company',
+  }),
 }))

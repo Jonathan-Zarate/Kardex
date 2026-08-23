@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, index, numeric, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { check, foreignKey, index, numeric, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { inventoryMovements } from './inventory-movements'
 import { products } from './products'
@@ -45,4 +45,19 @@ export const kardexEntries = pgTable('kardex_entries', {
     (${table.inQty} > 0 AND ${table.outQty} = 0) OR
     (${table.outQty} > 0 AND ${table.inQty} = 0)
   `),
+  movementCompanyFk: foreignKey({
+    columns: [table.movementId, table.companyId],
+    foreignColumns: [inventoryMovements.id, inventoryMovements.companyId],
+    name: 'fk_kardex_movement_company',
+  }),
+  productCompanyFk: foreignKey({
+    columns: [table.productId, table.companyId],
+    foreignColumns: [products.id, products.companyId],
+    name: 'fk_kardex_product_company',
+  }),
+  warehouseCompanyFk: foreignKey({
+    columns: [table.warehouseId, table.companyId],
+    foreignColumns: [warehouses.id, warehouses.companyId],
+    name: 'fk_kardex_warehouse_company',
+  }),
 }))

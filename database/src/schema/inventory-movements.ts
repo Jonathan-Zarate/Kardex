@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { check, foreignKey, index, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import { companies } from './companies'
 import { movementStatusEnum, movementSubtypeEnum, movementTypeEnum } from './enums'
@@ -34,6 +34,37 @@ export const inventoryMovements = pgTable('inventory_movements', {
 }, (table) => ({
   companyProductIdx: index('idx_movements_company_product').on(table.companyId, table.productId),
   companyCreatedAtIdx: index('idx_movements_company_created_at').on(table.companyId, table.createdAt),
+  idCompanyIdx: uniqueIndex('uq_movements_id_company').on(table.id, table.companyId),
+  productCompanyFk: foreignKey({
+    columns: [table.productId, table.companyId],
+    foreignColumns: [products.id, products.companyId],
+    name: 'fk_movements_product_company',
+  }),
+  warehouseCompanyFk: foreignKey({
+    columns: [table.warehouseId, table.companyId],
+    foreignColumns: [warehouses.id, warehouses.companyId],
+    name: 'fk_movements_warehouse_company',
+  }),
+  supplierCompanyFk: foreignKey({
+    columns: [table.supplierId, table.companyId],
+    foreignColumns: [suppliers.id, suppliers.companyId],
+    name: 'fk_movements_supplier_company',
+  }),
+  approvedByCompanyFk: foreignKey({
+    columns: [table.approvedBy, table.companyId],
+    foreignColumns: [users.id, users.companyId],
+    name: 'fk_movements_approved_by_company',
+  }),
+  createdByCompanyFk: foreignKey({
+    columns: [table.createdBy, table.companyId],
+    foreignColumns: [users.id, users.companyId],
+    name: 'fk_movements_created_by_company',
+  }),
+  referenceCompanyFk: foreignKey({
+    columns: [table.referenceMovementId, table.companyId],
+    foreignColumns: [table.id, table.companyId],
+    name: 'fk_movements_reference_company',
+  }),
   quantityCheck: check('ck_movements_quantity_positive', sql`${table.quantity} > 0`),
   unitCostCheck: check('ck_movements_unit_cost_nonnegative', sql`${table.unitCost} >= 0`),
   totalCostCheck: check('ck_movements_total_cost_nonnegative', sql`${table.totalCost} >= 0`),

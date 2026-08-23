@@ -14,4 +14,5 @@ export const suppliers = pgTable('suppliers', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   companyRucIdx: uniqueIndex('uq_suppliers_company_ruc').on(table.companyId, table.ruc),
+  idCompanyIdx: uniqueIndex('uq_suppliers_id_company').on(table.id, table.companyId),
 }))

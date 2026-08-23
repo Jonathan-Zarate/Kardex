@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, numeric, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, check, foreignKey, numeric, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 import { categories } from './categories'
 import { companies } from './companies'
 import { unitOfMeasureEnum } from './enums'
@@ -22,6 +22,17 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   companyCodeIdx: uniqueIndex('uq_products_company_code').on(table.companyId, table.code),
+  idCompanyIdx: uniqueIndex('uq_products_id_company').on(table.id, table.companyId),
+  categoryCompanyFk: foreignKey({
+    columns: [table.categoryId, table.companyId],
+    foreignColumns: [categories.id, categories.companyId],
+    name: 'fk_products_category_company',
+  }),
+  supplierCompanyFk: foreignKey({
+    columns: [table.supplierId, table.companyId],
+    foreignColumns: [suppliers.id, suppliers.companyId],
+    name: 'fk_products_supplier_company',
+  }),
   minStockCheck: check('ck_products_min_stock_nonnegative', sql`${table.minStock} >= 0`),
   salePriceCheck: check('ck_products_sale_price_nonnegative', sql`${table.salePrice} IS NULL OR ${table.salePrice} >= 0`),
 }))

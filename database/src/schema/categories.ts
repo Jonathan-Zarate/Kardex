@@ -11,4 +11,5 @@ export const categories = pgTable('categories', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   companyNameIdx: uniqueIndex('uq_categories_company_name').on(table.companyId, table.name),
+  idCompanyIdx: uniqueIndex('uq_categories_id_company').on(table.id, table.companyId),
 }))
