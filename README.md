@@ -2,7 +2,7 @@
 
 Sistema web multiempresa para administrar inventario y consultar un Kardex valorizado mediante promedio ponderado movil.
 
-> Estado: modernizacion activa. Frontend y backend compilan, la suite automatizada pasa y las decisiones de arquitectura se encuentran versionadas. Falta conectar y validar una rama de Neon antes del primer despliegue.
+> Estado: desplegado y validado. Frontend y backend operan en Vercel contra una rama de Neon, la suite automatizada pasa y las decisiones de arquitectura se encuentran versionadas.
 
 ## Alcance existente
 
@@ -31,28 +31,38 @@ Infraestructura objetivo:
 - GitHub Actions como puerta de calidad.
 - Integracion Git de Vercel para desplegar ambos proyectos.
 
+Entornos desplegados:
+
+- Frontend: <https://kardex-frontend-snowy.vercel.app>
+- Backend: <https://kardex-backend-blush.vercel.app>
+- Neon: proyecto `Kardex`, rama `staging`
+
 ## Estado verificable
 
-Revision realizada el 22 de agosto de 2026:
+Revision realizada el 23 de agosto de 2026:
 
 | Comprobacion | Resultado |
 |---|---|
 | TypeScript del monorepo (`pnpm typecheck`) | Correcto |
 | Lint (`pnpm lint`) | Correcto |
 | Builds (`pnpm build`) | Correcto |
-| Pruebas (`pnpm test`) | 17 aprobadas |
+| Pruebas (`pnpm test`) | 20 aprobadas |
 | Historial Git | Commits atomicos publicados en `main` |
-| Migraciones en Neon | Pendientes de una rama y credenciales confirmadas |
+| Migraciones en Neon | 5 aplicadas; 12 tablas, 12 `CHECK` y 39 FK |
+| Smoke test backend | Proceso y base de datos disponibles |
+| Validacion por roles | 18 comprobaciones correctas |
+| Concurrencia de stock | 16 exitos, 4 rechazos y saldo final no negativo |
+| Codigo duplicado concurrente | 1 alta, 7 conflictos y 0 errores internos |
 
-El detalle y los comandos reproducibles estan en [`docs/diagnostico-inicial.md`](docs/diagnostico-inicial.md).
+El detalle inicial esta en [`docs/diagnostico-inicial.md`](docs/diagnostico-inicial.md) y la evidencia de produccion en [`docs/validacion-produccion-2026-08-23.md`](docs/validacion-produccion-2026-08-23.md).
 
 ## Riesgos prioritarios
 
-1. Ejecutar migraciones y pruebas de integración contra una rama temporal de Neon.
-2. Añadir pruebas HTTP, de roles y de concurrencia contra PostgreSQL real.
-3. Configurar y verificar los dos proyectos Vercel.
-4. Reducir el bundle inicial del frontend mediante carga diferida.
-5. Completar la cobertura de flujos críticos y la prueba de estrés.
+1. Convertir la validacion HTTP ejecutada en una suite automatizada reproducible sin secretos.
+2. Promover el esquema validado de Neon `staging` a una rama de produccion.
+3. Reducir el bundle inicial del frontend mediante carga diferida.
+4. Ampliar las colisiones `23505 -> 409` a los demas catalogos con claves unicas.
+5. Completar pruebas de transferencias, devoluciones y ajustes concurrentes.
 
 ## Forma de trabajo
 
@@ -69,6 +79,7 @@ Las decisiones importantes se registraran cuando se tomen. Las evidencias deben 
 - [`kardex-inventario-prd.md`](kardex-inventario-prd.md): requerimientos funcionales originales.
 - [`docs/diagnostico-inicial.md`](docs/diagnostico-inicial.md): estado recibido y riesgos encontrados.
 - [`docs/despliegue-neon-vercel.md`](docs/despliegue-neon-vercel.md): configuración y validación del despliegue objetivo.
+- [`docs/validacion-produccion-2026-08-23.md`](docs/validacion-produccion-2026-08-23.md): matriz por rol, smoke tests y evidencia de concurrencia.
 - `docs/decisiones/`: ADR creados durante la evolucion del proyecto.
 - `docs/proceso/`: checkpoints y registro del trabajo asistido por IA.
 
