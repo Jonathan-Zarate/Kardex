@@ -2,6 +2,10 @@
   "name": "kardex",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
