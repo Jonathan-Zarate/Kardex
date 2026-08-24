@@ -248,7 +248,12 @@ authRoutes.post(
     await Promise.all([
       db
         .update(users)
-        .set({ passwordHash, updatedAt: new Date() })
+        .set({
+          passwordHash,
+          failedLoginAttempts: 0,
+          lockedAt: null,
+          updatedAt: new Date(),
+        })
         .where(eq(users.id, prt.userId)),
       db
         .update(passwordResetTokens)
